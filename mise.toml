@@ -1,0 +1,75 @@
+[tools]
+python = "3.12"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.install]
+description = "Install package with dev, excel, pdf, dxf extras"
+run = "python -m pip install --upgrade pip && python -m pip install -e '.[dev,excel,pdf,dxf]'"
+
+[tasks."install:all"]
+description = "Install package with all extras including gui"
+run = "python -m pip install --upgrade pip && python -m pip install -e '.[dev,excel,pdf,dxf,gui]'"
+
+[tasks.fmt]
+description = "Format code with ruff"
+run = "ruff format kontur tests"
+
+[tasks.lint]
+description = "Lint code with ruff"
+run = "ruff check kontur tests"
+
+[tasks."lint:fix"]
+description = "Fix linting issues then format"
+run = "ruff check --fix kontur tests && ruff format kontur tests"
+
+[tasks.typecheck]
+description = "Type check with mypy"
+run = "mypy kontur"
+
+[tasks.test]
+description = "Run tests with pytest"
+run = "python -m pytest"
+
+[tasks."test:cov"]
+description = "Run tests with coverage report"
+run = "python -m pytest --cov=kontur --cov-report=term-missing --cov-report=html"
+
+[tasks."test:golden"]
+description = "Run golden tests"
+run = "python -m pytest tests/test_golden.py"
+
+[tasks.check]
+description = "Run linting, type checking, and tests (CI gate)"
+depends = ["lint", "typecheck", "test"]
+
+[tasks.run]
+description = "Run kontur CLI with arguments"
+run = "python -m kontur"
+
+[tasks.demo]
+description = "Run kontur with demo template and tier 3"
+run = "python -m kontur --cli --template ЦОД --tier 3"
+
+[tasks.build]
+description = "Build wheel distribution"
+run = "python -m pip wheel . --no-deps -w dist"
+outputs = ["dist"]
+
+[tasks.compile]
+description = "Create one-file PyInstaller binary"
+run = "pyinstaller --onefile --name kontur --clean --noconfirm --distpath dist --workpath build/pyinstaller --specpath build --paths . kontur/__main__.py"
+outputs = ["dist/kontur"]
+
+[tasks."compile:bytecode"]
+description = "Compile Python files to bytecode"
+run = "python -m compileall -q kontur"
+
+[tasks.clean]
+description = "Clean build and cache files"
+run = "rm -rf build dist .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage && find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null; rm -f kontur_export_* *.spec; true"
+
+[tasks.ci]
+description = "Run full CI pipeline: check then build"
+depends = ["check", "build"]
